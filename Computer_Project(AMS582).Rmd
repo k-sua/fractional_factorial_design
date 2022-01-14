@@ -1,0 +1,242 @@
+---
+output:
+  word_document: default
+  html_document: default
+---
+# AMS 582 Computer Project 
+### Suea Kwon 112367002
+
+
+### Introduction Section
+
+There are ten independent variables ($A,B,C,D,E,F,G,H,J,K$). Each variable $x_i$ satisfies $−1\leq x_i \leq 1$ for $i=A,B,C,D,E,F,G,H,J,K$ given by $Y=f(a,b,...,k)+\epsilon$ that is potentially a function of up to ten variables.
+The rationale of the design is the following. 
+
+(1) Detect which factors has main effect on $Y$.
+(2) Detect which factors has interaction effects with whom on $Y$.
+(3) Determine $Y=f(a,b,c,...,j)$ by finding the estimated model $\hat{Y}$.  
+
+### Method Section
+
+We perform a $2^{10-2}$ fractional factorial design with generators $J=ABCDEF$, $K=ABCGH$ with 256 runs with resolution . In this design, based on the assumption that all 3-factor and higher interaction terms are non-existent based on the sparsity effect principle, we perform the design that has no aliasing among main effects and 2 factor interactions but, aliasing among few 3 factor interactions or higher interactions.
+Our assumption of the model is that (1) it is a multiple linear regression with interaction where the error term,$\epsilon$ is (2) normally distributed with 0 mean and (3) $\sigma^2$ constant variance.Also, (4) the errors are uncorrelated. 
+
+
+```{r}
+library("FrF2")
+library("multcomp")
+library("DescTools")
+dse=FrF2(nfactors=10,nruns=2^(10-2))
+summary(dse)
+```
+
+The protocol for validating the estimated model will be the following. 
+
+(1) We will evaluate and compare models to detect the significant factors and interaction terms with significance level 0.05 by using the ANOVA table, the Bonferroni confidence interval, and Half-Normal Plot. 
+(2) We will check the performance of the estimated model using adjusted $R$-squared.
+(3) Check the normality assumption of $Y$ using the Normal Probability Plot. 
+(4) Check the constant variance assumption of $Y$ or $\epsilon$ error using the Residual Plot between the fitted values and residuals of the estimated model.
+
+We use the the adjusted $R$-squared since it measures the variation explained by only the independent variables that actually affect the dependent variable. Thus, a multiple linear regression with interaction term has a good fit when the adjusted $R$-squared value is high. 
+
+### Results Section
+
+#### Sample Data Analysis
+ 
+The result for the experiment based on the basic design of the 8 factors($A,B,C,D,E,F,G,H$) is the following data. The dataset is clearly shown in the Appendix section. Let $y$ be the response variable and $X$ be a matrix with columns of results for each factor.
+```{r}
+dat=read.csv("total20.csv")
+sample=dat[,-1]
+sample$A=as.factor(sample$A)
+sample$B=as.factor(sample$B)
+sample$C=as.factor(sample$C)
+sample$D=as.factor(sample$D)
+sample$E=as.factor(sample$E)
+sample$F=as.factor(sample$F)
+sample$G=as.factor(sample$G)
+sample$H=as.factor(sample$H)
+sample$J=as.factor(sample$J)
+sample$K=as.factor(sample$K)
+y=sample["y"];X=sample[,-11]
+```
+
+
+The table below shows the mean value for $Y$ for each factor and level of the factor. We can see that $A$ factor seems to have a big effect on the response $Y$ as the higher setting of $A$ has the maximum mean value of $Y$ while the lower setting of $A$ has the minimum mean value of $Y$.
+```{r}
+A=as.table(by(sample$y,list(sample$A),mean))
+B=as.table(by(sample$y,list(sample$B),mean))
+C=as.table(by(sample$y,list(sample$C),mean))
+D=as.table(by(sample$y,list(sample$D),mean))
+E=as.table(by(sample$y,list(sample$E),mean))
+F=as.table(by(sample$y,list(sample$F),mean))
+G=as.table(by(sample$y,list(sample$G),mean))
+H=as.table(by(sample$y,list(sample$H),mean))
+J=as.table(by(sample$y,list(sample$J),mean))
+K=as.table(by(sample$y,list(sample$K),mean))
+rbind(A,B,C,D,E,F,G,H,J,K)
+```
+
+Below is the boxplot for each level of 10 factors for the response value of $Y$. It seems to be that $A,C,K$ has outliers of $Y$.
+```{r}
+par(mfrow=c(2,5))
+boxplot(y~sample$A,data=sample,xlab="A")
+boxplot(y~sample$B,data=sample,xlab="B")
+boxplot(y~sample$C,data=sample,xlab="C")
+boxplot(y~sample$D,data=sample,xlab="D")
+boxplot(y~sample$E,data=sample,xlab="E")
+boxplot(y~sample$F,data=sample,xlab="F")
+boxplot(y~sample$G,data=sample,xlab="G")
+boxplot(y~sample$H,data=sample,xlab="H")
+boxplot(y~sample$J,data=sample,xlab="J")
+boxplot(y~sample$K,data=sample,xlab="K")
+```
+
+Based on the following analysis of the values of $Y$, we can see that there are no outliers in the sample data of $Y$, which seems to have a distribution similar to normal. 
+```{r}
+par(mfrow=c(1,2))
+boxplot(y,horizontal=TRUE, main="Box Plot", xlab="Y")
+hist(sample$y,main="Histogram", xlab="Y");summary(sample$y)
+```
+
+#### Model Fitting
+
+We start by assuming an model with no interaction, then a model up to 2 factor interactions, assuming that 3-factor and higher interaction terms are non-existent based on the sparsity effect principle, and lastly check whether there is significant 3 factor interaction. Now, let us fit a model with up to 3 order interactions. The aliasing structure for 3 interactions are the following. 
+```{r}
+aliases(lm(y ~ (.)^3, data = sample), code=TRUE)
+```
+Thus, the estimated effects of the three interactions above are the collaborated effects of itself and its alias. 
+
+Let us construct a model with no interaction.
+```{r}
+m=aov(y~A+B+C+D+E+F+G+H+J+K,data=sample)
+summary(m)
+```
+
+Based on the ANOVA table above $A$ and $D$ are the only significant factors with very small p-value. Now let us compute the Bonferroni confidence interval with significance level 0.05. The result shows the both intervals do not contain 0 thus, there is a difference in effect between both levels of factor $A$ and $D$.
+
+```{r}
+#  Posthoc multiple comparisons of means : Bonferroni 
+#    95% family-wise confidence level
+PostHocTest(m, method = "bonferroni")$A
+PostHocTest(m, method = "bonferroni")$D
+```
+Now, let us construct a model up to 2 factor interactions. 
+```{r}
+m2= aov(y~(A+B+C+D+E+F+G+H+J+K)^2,data=sample)
+summary(m2)
+```
+In this model, $A$ and $D$ are the significant main factors, and $BF,CE,FG,DK$ terms are significant level of 0.1. Let us construct the Bonferroni confidence interval with significance level of 0.05 of the 4 interaction terms to determine whether there is a difference on effect among different combinations of levels for each 2 factor interaction. 
+
+```{r}
+result01=PostHocTest(m2, method = "bonferroni")$`B:F`
+result02=PostHocTest(m2, method = "bonferroni")$`C:E`
+result03=PostHocTest(m2, method = "bonferroni")$`F:G`
+result04=PostHocTest(m2, method = "bonferroni")$`D:K`
+knitr::kable(result01,caption="BF Interaction")
+```
+ 
+```{r}
+knitr::kable(result02,caption="CE Interaction")
+```
+```{r}
+knitr::kable(result03,caption="FG Interaction")
+```
+```{r}
+knitr::kable(result04,caption="DK Interaction")
+```
+Based on the confidence intervals, $DK$ seems to be only interaction term that shows difference of effect between $D=-1,K=1$ and $D=-1,K=-1$ and between $D=1,K=1$ and $D=-1,K=1.$
+
+Lastly, let us construct a model up to 3 factor interaction terms. 
+```{r}
+m3= aov(y~(A+B+C+D+E+F+G+H+J+K)^3,data=sample)
+summary(m3)
+```
+There are 19 3-factor interaction terms with significance level of 0.1. However, due to the sparsity effect principle, it is less likely that a 3-factor interaction is significant, especially the ones that do not contain a significant main factor or 2-factor interaction, thus $DHK,ADK,DEK$ are plausible significant factors, which are aliased to 4 factor or higher order interaction terms. Since the effect of $AHK$ is actually the additive effect of $AHK$ and $BCG$, we cannot directly conclude that $AHK$ is a significant factor with very small p-value. Moreover, any 2 factor interaction in $AHK$ are non-significant;therefore, less plausible to explain the model.  
+
+For validation, we plot Half-Normal Plot to determine how significant factor effects and non-significant factor effects are different in the model up to 3 factor interaction.
+
+```{r}
+factors <- lm(y~(A+B+C+D+E+F+G+H+J+K)^3, data = sample)
+DanielPlot(factors, half=TRUE, autolab = F, main = "Half-Normal Plot of Effects")
+```
+Based on the Half-Normal Plot plot, $A$,$D$,$DHK$, and $AHK$ seems to be significant. 
+
+Lastly, let us check whether there is a significant 4 factor interaction. Based on the alias structure, $DHK$ is aliased with the significant interaction term $EFGJ$. Thus, if we consider that the effect of $EFGJ$ is due to $DHK$ term,the significant 3 factor interaction term, we can conclude that there are only non-significant 4 factor interaction terms and even higher interaction terms, supporting the sparsity of effects principle. 
+
+```{r}
+aliases(lm(y ~ (.)^4, data = sample), code=TRUE)
+m4=aov(y~(A+B+C+D+E+F+G+H+J+K)^4-(A+B+C+D+E+F+G+H+J+K)^3,data=sample) 
+summary(m4)
+```
+
+Based on the ANOVA table below, although $DHK$ is significant with significance level of 0.05. However, comapared to the significant level of $A$ and $D$ is seems to have a p-value. Thus, following the sparsity effect principle, we will also delete $DHK$ in the model. 
+```{r}
+model=aov(y~A+D+D:H:K,data=sample)
+summary(model)
+```
+
+Therefore, we conclude that the estimated model will be the following with adjusted $R$-squared 0.1385939. 
+```{r}
+final_model=aov(y~A+D,data=sample)
+summary(final_model);summary.lm(final_model)$adj.r.squared
+```
+
+#### Model Adequacy Checking
+
+Let us check whether the assumptions are violated based on the sample data and fitted values from the estimated model below. 
+```{r}
+par(mfrow=c(1,2))
+qqnorm(sample$y)
+qqline(sample$y, col = 2)
+y_hat=fitted(final_model)
+res=final_model$residuals
+plot(y_hat, res, xlab = expression(hat(y)), ylab = "Residual",
+main = "Residuals vs. Fitted Values")
+abline(h=0, col = "red3")
+```
+
+Based on the analysis above, the $Y$ seems to follow normal distribution and has constant variance of $\epsilon$ as the quantiles are mostly on the red line and the distribution of points on the residual plot does not show any specific pattern and seems to be a horizontal band. Thus, we can conclude that our assumptions are not violated.  
+
+Therefore, based on the analysis, we have concluded that the estimated model is the following. 
+```{r}
+summary.lm(final_model)$coefficient
+```
+---
+$\hat Y=70707.349+4926.605x_A+3965.773x_D+\epsilon$ with $ ϵ∼N(0,σ^2), σ^2<∞$
+---
+
+The following is the table that specifies whether each variable does or does not affect the setting of the dependent variable; 
+```{r}
+Variables=c("A","B","C","D","E","F","G","H","J","K")
+Model=c("In","Out","Out","In","Out","Out","Out","Out","Out","Out")
+table <- data.frame(Variables,Model);table 
+```
+
+
+### Conclusion and Discussion Section 
+
+$A$ and $D$ are the significant main factors to the response $Y$. The limitation of the study is that there is no strong evidence that $AHK$ is a significant factor to response $Y$ since it is aliased to $BCG$. Also, the estimated model does not have a high adjusted $R$-squared value,implying low level of fitness to the sample data. However, to prevent the overfitting issue, rather than on focusing on increasing the value of the adjusted $R$-squared value by adding significant 3 factor interaction terms,we have constructed the model based on the significant main factors solely with significance level of 0.05, applying the sparsity effect principle.  
+
+### Appendix
+
+```{r}
+sample
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
