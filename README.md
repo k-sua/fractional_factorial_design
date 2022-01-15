@@ -6,7 +6,7 @@ Each model has ten independent variables. The value of each variable, ranging fr
 2. Detect which factors has interaction effects with whom on Y.
 3. Determine the estimated model for Y.  
 
-I perform a 2^{10-2} fractional factorial design with no replication and statistical analysis on the result to fulfill the goal with R programming. 
+I perform a 2^{10-2} fractional factorial design with no replication and statistical analysis on the result to fulfill the goal with R. 
 
 
 ## Executing Program
