@@ -9,7 +9,7 @@ Each model has ten independent variables. The value of each variable, ranging fr
 
 I perform a 2^{10-2} fractional factorial design with no replication and statistical analysis on the result to fulfill the goal with R. 
 
-The description of the project can be found in `Computer_Project(AMS582).Rmd`. 
+The detailed process of the project is described in `Computer_Project(AMS582).Rmd`. 
 ## Executing Program
 Download R version (>=4.1.0)
 
