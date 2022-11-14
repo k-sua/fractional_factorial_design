@@ -10,4 +10,8 @@ I perform a 2^{10-2} fractional factorial design with no replication and statist
 
 
 ## Executing Program
-Download R version 4.1.0
+Download R version (>=4.1.0)
+Imports: 
+* FrF2 (>=2.2-3) 
+* multcomp (>=1.4-20)
+* DescTools (>=0.99.47)
