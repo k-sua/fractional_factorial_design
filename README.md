@@ -7,15 +7,16 @@ Each model has ten independent variables. The value of each variable, ranging fr
 2. Detect which factors has interaction effects with whom on $Y$.
 3. Determine $Y=f(a,b,c,...,j)$ by finding the estimated model $\hat{Y}$.  
 
-The following statistical tools are used to fulfill the goals. 
+The following statistical methods, and tools are used to fulfill the goals. 
 
 ---
+* Fractional Factorial Design
 * ANOVA Test
 * Bonferroni Confidence Interval
 * QQ-plot
+* Daniel Plot
 * Multiple Linear Regression
 * Adjust $R^2$ - squared
-* Daniel Plot
 ---
 
 I perform a 2^{10-2} fractional factorial design with no replication and statistical analysis on the result to fulfill the goal with R. 
